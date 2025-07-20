@@ -11,13 +11,13 @@ pytest-cov>=4.1.0
 pytest-mock>=3.11.0
 
 # Code quality and formatting
-black>=23.0.0
+black>=24.4.0
 flake8>=6.0.0
 isort>=5.12.0
 mypy>=1.5.0
 
 # Type checking stubs
-types-requests>=2.31.0
+types-requests>=2.32.0
 types-PyYAML>=6.0.0
 
 # Documentation
@@ -38,7 +38,8 @@ memory-profiler>=0.61.0
 line-profiler>=4.1.0
 
 # Debugging
-pdb++>=0.10.3
+# pdbpp not available on PyPI, use pdbpp instead
+pdbpp>=0.10.3
 ipython>=8.14.0
 
 # Testing utilities

@@ -279,6 +279,34 @@ python src/dependency_cli.py validate audio
 - Update conflicting packages to compatible versions
 - Use `dependency_cli.py update` to resolve automatically
 
+#### "Could not find a version that satisfies the requirement"
+This error occurs when trying to install packages that don't exist on PyPI. Common causes:
+
+1. **Future package versions**: Requirements specify versions that don't exist yet
+2. **Typos in package names**: Incorrect package names in requirements files
+3. **Built-in modules**: Trying to install modules that are part of Python
+
+**Solutions**:
+```bash
+# Run the automatic fix script
+python scripts/fix_dependency_issues.py
+
+# Or manually validate and fix package versions
+python scripts/validate_package_versions.py
+```
+
+**Manual fixes for common issues**:
+- `PyQt6>=6.7.0` → `PyQt6>=6.6.0` (6.7.0 doesn't exist yet)
+- `PyQt6-tools>=6.5.0` → `PyQt6-tools>=6.4.2.3.3` (latest available)
+- `sqlite3` → Remove (built into Python)
+- `pdb++` → `pdbpp` (correct package name)
+
+#### "Package not found on PyPI"
+Some packages in requirements may not exist:
+- **Built-in modules**: `sqlite3`, `json`, `os` - these are part of Python
+- **Incorrect names**: `pdb++` should be `pdbpp`
+- **Platform-specific**: Some packages only exist on certain platforms
+
 ### Debug Mode
 Enable verbose logging for troubleshooting:
 ```bash
