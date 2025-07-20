@@ -90,7 +90,7 @@ class DependencyManager:
             "webrtcvad": "2.0.10",
             "speechrecognition": "3.10.0",
             "aiohttp": "3.9.1",
-            "pyqt6": "6.6.1",
+            "pyqt6": "6.4.2",
             "pyqt6-tools": "6.4.2.3.3",
             "pywin32": "306",
             "psutil": "5.9.6",

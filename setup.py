@@ -33,7 +33,7 @@ else:
         "webrtcvad>=2.0.10",
         "SpeechRecognition>=3.10.0",
         "aiohttp>=3.8.0",
-        "PyQt6>=6.5.0",
+        "PyQt6>=6.4.2,<6.5.0",
         "pywin32>=306",
         "psutil>=5.9.0",
         "Pillow>=10.0.0",
