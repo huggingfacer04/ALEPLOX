@@ -55,17 +55,17 @@
       ],
       "incompatible_combinations": [
         {
-          "description": "PyQt6 6.6+ requires pywin32 306+",
+          "description": "PyQt6 6.5+ requires pywin32 306+",
           "packages": {
-            "pyqt6": ">=6.6.0",
+            "pyqt6": ">=6.5.0",
             "pywin32": "<306"
           }
         },
         {
-          "description": "NumPy 2.0+ requires SciPy 1.13+",
+          "description": "NumPy 1.25+ requires SciPy 1.11+",
           "packages": {
-            "numpy": ">=2.0.0",
-            "scipy": "<1.13.0"
+            "numpy": ">=1.25.0",
+            "scipy": "<1.11.0"
           }
         },
         {
@@ -78,7 +78,7 @@
         {
           "description": "PyAudio compatibility with Python 3.12",
           "packages": {
-            "pyaudio": "<0.2.14",
+            "pyaudio": "<0.2.11",
             "python": ">=3.12.0"
           }
         }
@@ -87,25 +87,26 @@
     "known_good_versions": {
       "last_verified": "2025-07-20",
       "packages": {
-        "numpy": "1.26.4",
-        "scipy": "1.13.1",
-        "pyaudio": "0.2.14",
-        "librosa": "0.10.2",
+        "numpy": "1.24.4",
+        "scipy": "1.11.4",
+        "pyaudio": "0.2.11",
+        "librosa": "0.10.1",
         "webrtcvad": "2.0.10",
-        "speechrecognition": "3.10.4",
-        "aiohttp": "3.9.5",
-        "pyqt6": "6.7.1",
+        "speechrecognition": "3.10.0",
+        "aiohttp": "3.9.1",
+        "pyqt6": "6.4.2",
+        "pyqt6-tools": "6.4.2.3.3",
         "pywin32": "306",
-        "psutil": "5.9.8",
-        "pillow": "10.4.0",
-        "cryptography": "42.0.8",
+        "psutil": "5.9.6",
+        "pillow": "10.1.0",
+        "cryptography": "41.0.7",
         "pyyaml": "6.0.1",
-        "requests": "2.32.3",
-        "packaging": "24.1",
-        "pytest": "8.2.2",
-        "black": "24.4.2",
-        "flake8": "7.1.0",
-        "mypy": "1.10.1"
+        "requests": "2.31.0",
+        "packaging": "23.2",
+        "pytest": "7.4.3",
+        "black": "23.11.0",
+        "flake8": "6.1.0",
+        "mypy": "1.7.1"
       }
     },
     "update_policies": {

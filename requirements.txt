@@ -1,59 +1,42 @@
-# VoiceGuard Emergency Shutdown Service - Dependencies
+# VoiceGuard Emergency Shutdown Service - Production Dependencies
+# Updated with verified available package versions
 
-# Core Python packages
+# Core scientific computing
 numpy>=1.24.0
-scipy>=1.10.0
-asyncio-mqtt>=0.13.0
+scipy>=1.11.0
 
-# Audio processing
-pyaudio>=0.2.11
-librosa>=0.10.0
+# Audio processing (PyAudio requires system libraries on Linux)
+PyAudio>=0.2.11; sys_platform == "win32"
+librosa>=0.10.1
 webrtcvad>=2.0.10
-sounddevice>=0.4.6
-
-# Speech recognition
 SpeechRecognition>=3.10.0
-pocketsphinx>=5.0.0
 
-# HTTP client for API calls
-aiohttp>=3.8.0
+# Web and networking
+aiohttp>=3.9.0
 requests>=2.31.0
 
-# GUI framework
-PyQt6>=6.5.0
-PyQt6-tools>=6.5.0
+# GUI framework - COMPATIBLE VERSIONS
+PyQt6>=6.4.2,<6.5.0
+PyQt6-tools>=6.4.2.3.3
 
-# Windows integration
-pywin32>=306
-pywin32-ctypes>=0.2.2
-wmi>=1.5.1
-
-# System monitoring
+# Windows integration (Windows only)
+pywin32>=306; sys_platform == "win32"
 psutil>=5.9.0
 
-# Image processing for system tray icons
-Pillow>=10.0.0
+# Image processing
+Pillow>=10.1.0
 
-# Database
-sqlite3  # Built into Python
-
-# Cryptography for secure storage
+# Security and encryption
 cryptography>=41.0.0
 
-# Configuration and data formats
-pyyaml>=6.0
-toml>=0.10.2
+# Configuration and data
+PyYAML>=6.0.0
+packaging>=23.2
 
-# Logging and monitoring
-colorlog>=6.7.0
+# Development and formatting
+black>=24.4.0
 
-# Development and testing (optional)
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-black>=23.0.0
-flake8>=6.0.0
-mypy>=1.5.0
+# Logging
+colorlog>=6.8.0
 
-# Optional: For advanced audio features
-# tensorflow>=2.13.0  # For advanced AI models (large dependency)
-# torch>=2.0.0        # Alternative AI framework (large dependency)
+# Note: sqlite3 is built into Python and doesn't need installation

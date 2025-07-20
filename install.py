@@ -130,7 +130,24 @@ class VoiceGuardInstaller:
                             print(f"  - System: {issue}")
                         for issue in results.get('incompatibilities', []):
                             print(f"  - Compatibility: {issue}")
-                        return False
+                        for pkg in results.get('invalid_packages', []):
+                            print(f"  - Invalid package: {pkg} (not found on PyPI)")
+
+                        # If only invalid packages, offer to continue
+                        if (results.get('system_compatible', True) and
+                            not results.get('incompatibilities', []) and
+                            results.get('invalid_packages', [])):
+
+                            print("\n⚠️ Only invalid packages found. These may be:")
+                            print("  - Built-in Python modules (no installation needed)")
+                            print("  - Typos in package names")
+                            print("  - Packages not available on PyPI")
+
+                            response = input("Continue with installation anyway? [y/N]: ")
+                            if response.lower() not in ['y', 'yes']:
+                                return False
+                        else:
+                            return False
 
                     # Show recommendations
                     if results.get('recommendations'):

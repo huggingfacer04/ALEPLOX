@@ -81,23 +81,29 @@ class DependencyManager:
             except Exception as e:
                 self.logger.warning(f"Failed to load known good versions: {e}")
                 
-        # Default known good versions (as of July 2025)
+        # Default known good versions (verified available as of July 2025)
         return {
-            "numpy": "1.26.4",
-            "scipy": "1.13.1",
-            "pyaudio": "0.2.14",
-            "librosa": "0.10.2",
+            "numpy": "1.24.4",
+            "scipy": "1.11.4",
+            "pyaudio": "0.2.11",
+            "librosa": "0.10.1",
             "webrtcvad": "2.0.10",
-            "speechrecognition": "3.10.4",
-            "aiohttp": "3.9.5",
-            "pyqt6": "6.7.1",
+            "speechrecognition": "3.10.0",
+            "aiohttp": "3.9.1",
+            "pyqt6": "6.4.2",
+            "pyqt6-tools": "6.4.2.3.3",
             "pywin32": "306",
-            "psutil": "5.9.8",
-            "pillow": "10.4.0",
-            "cryptography": "42.0.8",
+            "psutil": "5.9.6",
+            "pillow": "10.1.0",
+            "cryptography": "41.0.7",
             "pyyaml": "6.0.1",
-            "requests": "2.32.3",
-            "packaging": "24.1"
+            "requests": "2.31.0",
+            "packaging": "23.2",
+            "pytest": "7.4.3",
+            "black": "24.4.0",
+            "flake8": "6.1.0",
+            "mypy": "1.7.1",
+            "colorlog": "6.8.2"
         }
         
     def _setup_warning_handler(self):
@@ -184,39 +190,101 @@ class DependencyManager:
     def get_latest_versions(self, packages: List[str]) -> Dict[str, Optional[str]]:
         """Get latest compatible versions from PyPI"""
         latest_versions = {}
-        
+
         for package in packages:
             try:
                 # Clean package name (remove version specifiers)
                 clean_name = package.split('>=')[0].split('==')[0].split('<')[0].strip()
-                
-                # Check PyPI for latest version
+
+                # Check PyPI for package information
                 response = requests.get(
                     f"https://pypi.org/pypi/{clean_name}/json",
                     timeout=10
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     latest_version = data['info']['version']
-                    
-                    # Validate compatibility
-                    if self._is_version_compatible(clean_name, latest_version):
-                        latest_versions[clean_name] = latest_version
+                    available_versions = list(data['releases'].keys())
+
+                    # Validate that the version actually exists and has files
+                    if self._validate_version_exists(clean_name, latest_version, data):
+                        # Check compatibility
+                        if self._is_version_compatible(clean_name, latest_version):
+                            latest_versions[clean_name] = latest_version
+                        else:
+                            # Find best compatible version
+                            compatible_version = self._find_best_compatible_version(
+                                clean_name, available_versions
+                            )
+                            latest_versions[clean_name] = compatible_version
                     else:
-                        # Use known good version
+                        # Use known good version if latest is invalid
                         latest_versions[clean_name] = self.known_good_versions.get(
-                            clean_name, latest_version
+                            clean_name, None
                         )
                 else:
                     self.logger.warning(f"Could not fetch version for {clean_name}")
-                    latest_versions[clean_name] = None
-                    
+                    latest_versions[clean_name] = self.known_good_versions.get(clean_name, None)
+
             except Exception as e:
                 self.logger.error(f"Error checking version for {package}: {e}")
-                latest_versions[package] = None
-                
+                # Fallback to known good version
+                clean_name = package.split('>=')[0].split('==')[0].split('<')[0].strip()
+                latest_versions[clean_name] = self.known_good_versions.get(clean_name, None)
+
         return latest_versions
+
+    def _validate_version_exists(self, package: str, version: str, pypi_data: Dict) -> bool:
+        """Validate that a version actually exists and has installable files"""
+        try:
+            if version not in pypi_data.get('releases', {}):
+                return False
+
+            # Check if version has any files
+            version_files = pypi_data['releases'][version]
+            if not version_files:
+                self.logger.warning(f"Version {version} of {package} has no files")
+                return False
+
+            # Check if files are installable (have wheel or source distribution)
+            has_installable = any(
+                file_info.get('packagetype') in ['wheel', 'sdist']
+                for file_info in version_files
+            )
+
+            if not has_installable:
+                self.logger.warning(f"Version {version} of {package} has no installable files")
+                return False
+
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error validating version {version} for {package}: {e}")
+            return False
+
+    def _find_best_compatible_version(self, package: str, available_versions: List[str]) -> Optional[str]:
+        """Find the best compatible version from available versions"""
+        try:
+            # Sort versions in descending order
+            from packaging import version
+            sorted_versions = sorted(
+                available_versions,
+                key=lambda v: version.parse(v),
+                reverse=True
+            )
+
+            # Find the highest compatible version
+            for ver in sorted_versions:
+                if self._is_version_compatible(package, ver):
+                    return ver
+
+            # If no compatible version found, return known good version
+            return self.known_good_versions.get(package, None)
+
+        except Exception as e:
+            self.logger.error(f"Error finding compatible version for {package}: {e}")
+            return self.known_good_versions.get(package, None)
         
     def _is_version_compatible(self, package: str, version_str: str) -> bool:
         """Check if a package version is compatible"""
@@ -247,62 +315,77 @@ class DependencyManager:
     def pre_installation_check(self, requirements_files: List[Path]) -> Tuple[bool, Dict[str, Any]]:
         """Comprehensive pre-installation dependency check"""
         self.logger.info("Starting pre-installation dependency check...")
-        
+
         results = {
             'system_compatible': True,
             'system_issues': [],
             'package_updates': {},
             'incompatibilities': [],
-            'recommendations': []
+            'recommendations': [],
+            'invalid_packages': []
         }
-        
+
         # System compatibility check
         system_ok, system_issues = self.check_system_compatibility()
         results['system_compatible'] = system_ok
         results['system_issues'] = system_issues
-        
+
         if not system_ok:
             self.logger.error(f"System compatibility issues: {system_issues}")
             return False, results
-            
+
         # Parse requirements files
         all_packages = []
         for req_file in requirements_files:
             if req_file.exists():
                 packages = self._parse_requirements_file(req_file)
                 all_packages.extend(packages)
-                
-        # Get latest versions
-        package_names = [pkg.split('>=')[0].split('==')[0].split('<')[0].strip() 
+
+        # Validate package existence and get latest versions
+        package_names = [pkg.split('>=')[0].split('==')[0].split('<')[0].strip()
                         for pkg in all_packages]
+
+        # Remove built-in modules that don't need installation
+        builtin_modules = {'sqlite3', 'json', 'os', 'sys', 'pathlib', 'datetime', 'logging'}
+        package_names = [pkg for pkg in package_names if pkg not in builtin_modules]
+
         latest_versions = self.get_latest_versions(package_names)
-        
-        # Check for updates
-        for package, latest_ver in latest_versions.items():
-            if latest_ver:
-                try:
-                    current_ver = pkg_resources.get_distribution(package).version
-                    if version.parse(latest_ver) > version.parse(current_ver):
-                        results['package_updates'][package] = {
-                            'current': current_ver,
-                            'latest': latest_ver
-                        }
-                except pkg_resources.DistributionNotFound:
+
+        # Check for invalid packages (None versions)
+        invalid_packages = [pkg for pkg, ver in latest_versions.items() if ver is None]
+        results['invalid_packages'] = invalid_packages
+
+        if invalid_packages:
+            self.logger.error(f"Invalid packages found: {invalid_packages}")
+            results['recommendations'].append(f"Fix invalid packages: {', '.join(invalid_packages)}")
+
+        # Check for updates (only for valid packages)
+        valid_versions = {pkg: ver for pkg, ver in latest_versions.items() if ver is not None}
+
+        for package, latest_ver in valid_versions.items():
+            try:
+                current_ver = pkg_resources.get_distribution(package).version
+                if version.parse(latest_ver) > version.parse(current_ver):
                     results['package_updates'][package] = {
-                        'current': 'not_installed',
+                        'current': current_ver,
                         'latest': latest_ver
                     }
-                    
-        # Check for incompatibilities
-        incompatibilities = self._check_package_incompatibilities(latest_versions)
+            except pkg_resources.DistributionNotFound:
+                results['package_updates'][package] = {
+                    'current': 'not_installed',
+                    'latest': latest_ver
+                }
+
+        # Check for incompatibilities (only for valid packages)
+        incompatibilities = self._check_package_incompatibilities(valid_versions)
         results['incompatibilities'] = incompatibilities
-        
+
         # Generate recommendations
         recommendations = self._generate_recommendations(results)
         results['recommendations'] = recommendations
-        
-        success = (system_ok and len(incompatibilities) == 0)
-        
+
+        success = (system_ok and len(incompatibilities) == 0 and len(invalid_packages) == 0)
+
         self.logger.info(f"Pre-installation check completed. Success: {success}")
         return success, results
         
